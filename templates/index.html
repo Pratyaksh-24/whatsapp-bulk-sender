@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bulk Sender Pro</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #25D366;
+            --primary-dark: #1da851;
+            --secondary: #128C7E;
+            --dark: #075E54;
+            --light-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-primary: #1f1f1f;
+            --text-secondary: #667781;
+            --danger: #ff4444;
+            --warning: #ffbb33;
+            --success: #00C851;
+            --shadow: 0 2px 20px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            animation: fadeInUp 0.8s ease;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        .upload-zone {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--light-bg);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: #e8f5e9;
+        }
+
+        .upload-zone.dragging {
+            border-color: var(--primary);
+            background: #e8f5e9;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .file-info {
+            background: var(--light-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .file-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .file-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .progress-section {
+            grid-column: 1 / -1;
+        }
+
+        .progress-bar-container {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--light-bg);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-card.success .stat-value {
+            color: var(--success);
+        }
+
+        .stat-card.danger .stat-value {
+            color: var(--danger);
+        }
+
+        .stat-card.primary .stat-value {
+            color: var(--primary);
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            color: #f0f0f0;
+            padding: 20px;
+            border-radius: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-left: 3px solid transparent;
+            padding-left: 10px;
+            margin-bottom: 5px;
+        }
+
+        .log-entry.info {
+            border-color: #2196F3;
+            color: #64B5F6;
+        }
+
+        .log-entry.success {
+            border-color: var(--success);
+            color: #81C784;
+        }
+
+        .log-entry.error {
+            border-color: var(--danger);
+            color: #E57373;
+        }
+
+        .log-entry.warning {
+            border-color: var(--warning);
+            color: #FFD54F;
+        }
+
+        .log-timestamp {
+            color: #888;
+            margin-right: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .preview-table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .preview-table th {
+            background: var(--light-bg);
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fab fa-whatsapp"></i> WhatsApp Bulk Sender Pro</h1>
+            <p>Professional bulk messaging solution with real-time tracking</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="main-grid">
+            <!-- Upload Section -->
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-file-upload"></i>
+                    Upload Excel File
+                </h2>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p class="upload-text">
+                        <strong>Drag & drop</strong> your Excel file here<br>
+                        or click to browse
+                    </p>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
+                </div>
+
+                <div class="file-info" id="fileInfo">
+                    <div class="file-info-item">
+                        <span><strong>Filename:</strong></span>
+                        <span id="fileName">-</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span><strong>Total Rows:</strong></span>
+                        <span id="totalRows">-</span>
+                    </div>
+                    <div class="file-info-item">
+                        <span><strong>Columns:</strong></span>
+                        <span id="columns">-</span>
+                    </div>
+                    <div id="previewContainer"></div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <a href="/download-template" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Download Template
+                    </a>
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-cog"></i>
+                    Configuration
+                </h2>
+
+                <div class="form-group">
+                    <label class="form-label" for="countryCode">
+                        <i class="fas fa-globe"></i> Default Country Code
+                    </label>
+                    <input type="text" id="countryCode" class="form-input" value="+91" placeholder="+91">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-info-circle"></i> Prerequisites
+                    </label>
+                    <ul style="color: var(--text-secondary); line-height: 2;">
+                        <li>✓ WhatsApp Desktop installed and logged in</li>
+                        <li>✓ Excel file with Number and Message columns</li>
+                        <li>✓ Do not use keyboard/mouse during sending</li>
+                    </ul>
+                </div>
+
+                <button class="btn btn-primary" id="startBtn" disabled style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Start Sending
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="card progress-section hidden" id="progressSection">
+            <h2 class="card-title">
+                <i class="fas fa-chart-line"></i>
+                Progress & Statistics
+            </h2>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Messages</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-value" id="statSuccess">0</div>
+                    <div class="stat-label">Successful</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-value" id="statFailed">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-secondary" id="pauseBtn">
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button class="btn btn-danger" id="stopBtn">
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+
+            <h3 style="margin-top: 30px; margin-bottom: 15px;">
+                <i class="fas fa-terminal"></i> Live Logs
+            </h3>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentFilePath = null;
+        let isPaused = false;
+
+        // DOM Elements
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const logContainer = document.getElementById('logContainer');
+        const alertContainer = document.getElementById('alertContainer');
+
+        // Upload Zone Events
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragging');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragging');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragging');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFileUpload(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFileUpload(file);
+        });
+
+        // File Upload Handler
+        function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showAlert('Uploading file...', 'info');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Upload failed');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    currentFilePath = data.filepath;
+                    displayFileInfo(data);
+                    startBtn.disabled = false;
+                    showAlert(`File uploaded successfully! ${data.total_rows} messages ready.`, 'success');
+                } else {
+                    showAlert('Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                showAlert('Upload failed: ' + error.message, 'error');
+            });
+        }
+
+        // Display File Info
+        function displayFileInfo(data) {
+            document.getElementById('fileName').textContent = data.filename;
+            document.getElementById('totalRows').textContent = data.total_rows;
+            document.getElementById('columns').textContent = data.columns.join(', ');
+
+            let previewHTML = '<h4 style="margin-top: 15px;">Preview (First 5 rows):</h4>';
+            previewHTML += '<table class="preview-table"><thead><tr>';
+            data.columns.forEach(col => {
+                previewHTML += `<th>${col}</th>`;
+            });
+            previewHTML += '</tr></thead><tbody>';
+
+            data.preview.forEach(row => {
+                previewHTML += '<tr>';
+                data.columns.forEach(col => {
+                    previewHTML += `<td>${row[col] || '-'}</td>`;
+                });
+                previewHTML += '</tr>';
+            });
+            previewHTML += '</tbody></table>';
+
+            document.getElementById('previewContainer').innerHTML = previewHTML;
+            fileInfo.classList.add('show');
+        }
+
+        // Start Sending
+        startBtn.addEventListener('click', () => {
+            if (!currentFilePath) {
+                showAlert('Please upload an Excel file first!', 'error');
+                return;
+            }
+
+            const countryCode = document.getElementById('countryCode').value;
+
+            socket.emit('start_sending', {
+                filepath: currentFilePath,
+                country_code: countryCode
+            });
+
+            progressSection.classList.remove('hidden');
+            startBtn.disabled = true;
+            logContainer.innerHTML = '';
+        });
+
+        // Pause/Resume
+        pauseBtn.addEventListener('click', () => {
+            socket.emit('pause_sending');
+            isPaused = !isPaused;
+            pauseBtn.innerHTML = isPaused ? 
+                '<i class="fas fa-play"></i> Resume' : 
+                '<i class="fas fa-pause"></i> Pause';
+        });
+
+        // Stop
+        stopBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to stop the process?')) {
+                socket.emit('stop_sending');
+            }
+        });
+
+        // Socket Event Listeners
+        socket.on('log_message', (data) => {
+            addLog(data.message, data.level, data.timestamp);
+        });
+
+        socket.on('progress_update', (data) => {
+            updateProgress(data);
+        });
+
+        socket.on('process_complete', (data) => {
+            showAlert(`Process completed! Success: ${data.success}, Failed: ${data.failed}`, 'success');
+            startBtn.disabled = false;
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+            isPaused = false;
+        });
+
+        socket.on('process_started', (data) => {
+            showAlert(data.message, 'success');
+        });
+
+        socket.on('error', (data) => {
+            showAlert(data.message, 'error');
+        });
+
+        // Helper Functions
+        function addLog(message, level, timestamp) {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${level}`;
+            logEntry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span>${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function updateProgress(data) {
+            const percentage = data.percentage;
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+
+            document.getElementById('statTotal').textContent = data.total;
+            document.getElementById('statSuccess').textContent = data.success;
+            document.getElementById('statFailed').textContent = data.failed;
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            alertContainer.appendChild(alert);
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 500);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
