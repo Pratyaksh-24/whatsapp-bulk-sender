@@ -1,5 +1,5 @@
 # Use official lightweight Python image
-FROM python:3.11-slim
+FROM Python 3.12.6
 
 # Prevent Python from writing .pyc files and buffering output
 ENV PYTHONDONTWRITEBYTECODE=1
